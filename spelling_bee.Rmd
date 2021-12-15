@@ -15,20 +15,33 @@ library(tidyverse)
 #all english words
 word_list <- read_csv(paste0("https://raw.githubusercontent.com/dwyl",
                              "/english-words/master/words_alpha.txt"),
-                           col_names = "word")
+                      col_names = "word")
 word_list <- word_list %>%
   mutate(length = str_length(word)) %>% 
   filter(length >= 4)
+
+#words to remove, weren't accepted in puzzle
+nonwords <- c("fluoroformol", "fluoroform", "floramour", "floramor", "formular",
+  "furfural", "furfurol", "affloof", "famular", "farfara", "florula",
+  "formful", "mafurra", "alfuro", "fallal", "farfal", "faroff",
+  "forfar", "formol", "fulful", "fullam", "fullom", "fulmar", "furfur",
+  "mafura", "afara", "afoam", "alfur", "falla", "flaff", "fluor", "flurr",
+  "foram", "forma", "forra", "froom", "fural", "luffa", "mafoo",  "affa",
+  "alfa", "faff", "fala", "fama", "farl", "faro", "flam", "flor", "foll",
+  "fram", "frau", "fuff", "fula", "loof", "luff", "moff", "olaf", "olof",
+  "raff", "ralf", "rolf")
+
+word_list <- word_list %>% filter(!word %in% nonwords)
 ```
 
 ```{r letters}
-center_letter <- "c"
-circle_letters <- c("k",
-                    "j",
+center_letter <- "f"
+circle_letters <- c("m",
+                    "u",
                     "a",
-                    "p",
+                    "r",
                     "l",
-                    "e")
+                    "o")
 all_letters <- c(center_letter, circle_letters)
 ```
 
@@ -54,22 +67,19 @@ answers <- solving %>%
 answers$word
 ```
 
-Work in Progress from here down
-
-
-```{r}
+```{r pangrams}
 pangrams <- answers %>%
   filter(length >= 7) %>% 
   #check the puzzle's letters against the word's letters
+  mutate(lets = map(lets, unique)) %>% 
   mutate(pangram = map(lets, ~.x %in% all_letters, lets=.x)) %>%
  #count number of matching letters
   mutate(p_matches = map(pangram, sum)) %>% 
   unnest(p_matches)
 
-
 pangrams %>%
   #keep words that only use the puzzle's letters
-  filter(p_matches >= length) %>% 
+  filter(p_matches == 7) %>% 
   arrange(desc(length)) %>% 
   pull(word)
 ```
