@@ -1,0 +1,73 @@
+---
+title: "NYT Spelling Bee Solver"
+author: "C-T Berezin"
+date: "11/9/21"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+#all english words
+word_list <- read_csv(paste0("https://raw.githubusercontent.com/dwyl",
+                             "/english-words/master/words_alpha.txt"),
+                           col_names = "word")
+word_list <- word_list %>%
+  mutate(length = str_length(word)) %>% 
+  filter(length >= 4)
+```
+
+```{r}
+center_letter <- "c"
+circle_letters <- c("d",
+                    "m",
+                    "a",
+                    "y",
+                    "r",
+                    "e")
+all_letters <- c(center_letter, circle_letters)
+
+rmvd_lets <- letters %>% subset(!letters %in% circle_letters & !letters %in% center_letter)
+
+
+answers <- word_list %>%
+  filter(str_detect(word, center_letter) == TRUE) %>% 
+  mutate(lets = str_split(word, pattern="")) %>% 
+  filter(str_detect(string=word, pattern=str_c(rmvd_lets, collapse="|")) == FALSE) %>% 
+  pull(word)
+```
+
+```{r}
+answers
+```
+
+
+Work in Progress from here down
+
+```{r}
+answers$lets <- answers %>%
+  flatten_chr(answers$lets)
+
+head(answers)
+
+```
+
+
+
+```{r}
+filter(lets %in% all_letters)
+
+filter(str_detect(string=word, pattern=str_c(rmvd_lets, collapse="|")) == FALSE)
+
+count(answers)
+head(answers)
+
+all_letters <- c(center_letter, circle_letters)
+
+pangrams <- word_list %>% filter(str_detect(word, center_letter) == TRUE) %>%
+  str_detect(string=word, pattern=all_letters)
+```
