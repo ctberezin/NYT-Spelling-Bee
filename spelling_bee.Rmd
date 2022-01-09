@@ -1,26 +1,37 @@
 ---
 title: "NYT Spelling Bee Solver"
 author: "C-T Berezin"
-date: "11/9/21"
+date: "`r Sys.Date()`"
 output:
   pdf_document: default
   html_document: default
 ---
 
-```{r}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message=FALSE, error=FALSE)
 library(tidyverse)
 ```
 
-```{r word_list}
+```{r word_list, include=FALSE}
 #all english words
 word_list <- read_csv(paste0("https://raw.githubusercontent.com/dwyl",
                              "/english-words/master/words_alpha.txt"),
-                      col_names = "word")
+                      col_names = "word",
+                      show_col_types = FALSE)
+
+#adding words not in list
 word_list <- word_list %>%
+  add_row(word=c("acai", "cannellini", "videoed", "vidiot", "binging", "bonobo",
+                 "noob", "cami", "matcha", "tamari", "wiki", "incentivize",
+                 "innie", "netizen", "nite", "zine"))
+
+word_list <- word_list %>%
+  arrange(word) %>% 
   mutate(length = str_length(word)) %>% 
   filter(length >= 4)
+```
 
-#words to remove, weren't accepted in puzzle
+```{r nonword_list, include=FALSE}
 nonwords <- c("fluoroformol", "fluoroform", "floramour", "floramor", "formular",
   "furfural", "furfurol", "affloof", "famular", "farfara", "florula",
   "formful", "mafurra", "alfuro", "fallal", "farfal", "faroff",
@@ -29,23 +40,179 @@ nonwords <- c("fluoroformol", "fluoroform", "floramour", "floramor", "formular",
   "foram", "forma", "forra", "froom", "fural", "luffa", "mafoo",  "affa",
   "alfa", "faff", "fala", "fama", "farl", "faro", "flam", "flor", "foll",
   "fram", "frau", "fuff", "fula", "loof", "luff", "moff", "olaf", "olof",
-  "raff", "ralf", "rolf")
+  "raff", "ralf", "rolf", "acacian", "acaciin", "acacin", "acacine", "acaena",
+  "acale", "acana", "acca", "acce", "accel", "accinge", "accinging", "acclinal",
+  "acini","acinic","acle","aclinal","aclinic","aecia","aecial","agacella",
+  "aganice","aglance","alangiaceae","alca","alcae","alcaic","alcali","alcanna",
+  "alce","alcine","alec","algic","alginic","alice","alicia","allelic",
+  "alliaceae","alliancing","allice","allicin","anaclinal","analgic","ancien",
+  "ancience","ancile","ancilia","ancilla","ancillae","ancille","ancle","anelace",
+  "angelical","angelican","angelicic","anglic","anglican","anglice","anicca",
+  "anice","anilic","anlace","caca","cacalia","cacan","cacana","caccia","cace",
+  "cacei","caci","caeca","caecal","caecilia","caeciliae","caecilian","caelian",
+  "cageling","cagn","caic","caille","cain","caingang","caingin","cainian","calc",
+  "calcanea","calcaneal","calcanean","calcanei","calcannea","calcannei","calci",
+  "calcic","calcine","calcining","calean","calic","calicle","caliga","calili",
+  "calin","calina","caline","callan","calli","cana","canaan","canacee","canaglia",
+  "canaille","canalage","canale","canali","canaling","canalla","canalling","cananaean",
+  "cananga","canc","canccelli","cancelli","canel","canela","canell","canella",
+  "canellaceae","canelle","cangan","cangia","cangle","canille","caninal","canli",
+  "cann","cannaceae","cannalling","cannel","cannele","cannelle","cannie","ceca",
+  "cecal","cecca","cecil","cecile","cecilia","ceil","ceile","cele","celia",
+  "celialgia","cella","cellae","celling","cenacle","cene","cicala","cicale",
+  "cienaga","cienega","cigala","cigale","cilice","cilician","ciliella","cill",
+  "cincinnal","cincinni","cine","cinel","cinene","cingle","clag","clagging",
+  "clanning","clee","cleg","clin","clinal","cline","clinia","cnicin","ecca","ecce",
+  "eccl","egence","elaeagnaceae", "elaic","elance","elec","elegiacal","elianic",
+  "ellagic","ellice","encaenia","encelia","encell","encia","encina","encinal","encl",
+  "eneclann","englacial","eniac","gaelic","gaincall","galacaceae","galenic",
+  "galenical","galician","gallic","gallican","gallinaceae", "gallinacean",
+  "gallinacei","ganancial","gangliac","geic","genic", "glaceing", "icacinaceae",
+  "iceni","icica","ileac","ilicaceae","ilicic","ilicin","inca","incage","incaging",
+  "incaic","incan","incl","incle","inlace","inlacing","lacca","laccaic","laccainic",
+  "laccic","laccin","lacinia","langca","lecaniinae", "lecanine","lenca","lencan",
+  "licania","licca","licence","licencee","licencing","licinian","lienic","ligeance",
+  "lilacin","liliaceae","linac","linaceae","lingence","nace","nacelle","nance",
+  "nangca","neanic","necia","nicaean","niceling","nicene","nicenian","nici",
+  "deve","devi","devide","devot","devoto","devove","divet","divi","divid","divoto",
+  "evetide","evite","evited","evoe","optive","ovid","poove","teevee","totitive",
+  "tovet","veddoid","vedet","vedette","veepee","vetitive","vide","vidette",
+  "viii","vite","viti","vive","vivo","voet","voidee","voivod","voivode","voodooed",
+  "bibb","bibbing","bibi","bibio","bibiri","bigg","biggin","bigging","bing","bini",
+  "bino","biog","bion","biri","birn","biron","birr","birri","birring","bobo",
+  "boggin","bogo","bogong","boii","bonbo","bonging","boni","bono","boong","borg",
+  "bori","borning","boro","bororo","bown","bribri","brin","brob","brog","broo",
+  "broon","brrr","gibbi","gibbing","gobbin","gobbing","gobi","gobio","gobo",
+  "gorb","inbow","inbring","inbringing","inorb","nibbing","nibong","nonborrowing",
+  "obongo","ogboni","orbing","oribi","robbin","robinin","winbrow","wingbow",
+  "bhoot","bhut","bohor","borgh","borh","brogh","brough","brugh","bught","buhr",
+  "burh","ghbor","grough","guhr","hogg","hogo","hoho","hooroo","hort","hough",
+  "hout","houtou","hubb","hubbob","hubbuboo","hugh","hugo","hurr","hurroo","orth",
+  "ortho","ough","outborough","outbrought","outhorror","outhut","outthrob",
+  "outthrough","rohob","roubouh","roughroot","rought","routh","ruth","thob",
+  "thoght","thoo","thor","thoro","thort","thro","throu","thru","thruout","thurt",
+  "toho","tohubohu","toroth","tought","tuth","uhuru","acamar","acmatic","acmic",
+  "aimara","amacratic","amah","amar","amara","amarth","amati","amhar","amharic",
+  "amia","amic","amici","amimia","amir","amit","amita","amma","ammi","amra",
+  "amrit","amrita","amtrac","aramaic","arithmic","armaria","armata","armit",
+  "atma","caam","caama","cacam","caimacam","camaca","camara","camata","cariama",
+  "carthamic","chacma","cham","chama","chamar","chamm","chamma","chiam",
+  "chimachima","chimar","chirimia","chirm","chitimacha","cima","crim","hamacratic",
+  "hamata","hami","hamitic","hammam","harim","hima","himamatia","himati","himatia",
+  "hiram","ihram","imamah","imamic","imit","immi","immit","irma","maam","maar",
+  "maat","macaca","macchia","mach","machair","machaira","machar","machi","macram",
+  "mactra","maha","mahar","maharmah","mahat","mahi","mahra","mahratta","mahri",
+  "maia","maiacca","mair","mammati","mara","marah","marara","maratha","marathi",
+  "marattia","marc","marci","marcia","mari","maria","marica","marita","mariti",
+  "marmar","marmit","marram","martha","matai","matamata","matar","matara",
+  "matha","matra","matrah","matriarchic","matric","matricaria","matt","matta",
+  "matti","miami","miamia","micah","micht","micmac","micra","mima","mimi",
+  "mimir","mira","mirac","mirach","miri","miriam","mitch","mithra","mithraic",
+  "mithraitic","mithratic","mithriac","mitra","mmmm","rama","ramarama","rami",
+  "rammi","ramta","rima","tacamahac","tacamahaca","tahami","tama","tamara",
+  "tammar","tarmi","tartramic","thairm","tharm","thiram","thram","tiam","timar",
+  "timarri","tirma","trama","trimtram", "gnow","gowk","iiwi","kiwikiwi",
+  "nonowning","ungown","unknow","unowing","unown","unwig","unwigging","unwink",
+  "unwinking","unwinning","wiking","wikiwiki","wiwi","wokowi","wong","woning",
+  "wonning","woon","wugg","acara","acarari","acari","accra","acracy","acryl",
+  "acrylyl","afray","afric","africa","aira","airify","alacrify","alar","alaria",
+  "alaric","alary","alfilaria","alliaria","araca","aracari","aralia","arar",
+  "arara","arca","arillary","arilli","arracacia","arrayal","arri","arricci",
+  "arry","arya","aryl","cacara","caiarara","cair","calcar","calcaria","cara",
+  "caracal","caracara","carara","carf","carica","cariri","carl","carli","carr",
+  "carrara","carri","cary","carya","caryl","ciliary","circ","circar","cirl",
+  "clair","clar","clara","clary","craal","cracca","cray","cric","cryal","cyclar",
+  "cyril","cyrilla","cyrillic","fairily","farci","farcial","farcify","farcy",
+  "fiar","ficaria","ficary","filar","filaria","filarial","firca","firry","firy",
+  "flary","frailly","frary","friarly","frilal","frillily","icaria","illyric",
+  "iyar","lairy","laralia","larararia","lararia","lari","laria","larry","lyra",
+  "racily","raia","raif","railly","rall","rara","rarify","raya","riccia","ricrac",
+  "riffi","rifi","rilly","ryal","yair","yaray","yariyari","yarl","yarly","yarr",
+  "yarry","yirr","adad","adar","adaw","adda","addda","addr","adod","ador",
+  "adoral","adrad","adward","akal","akala","akaroa","akka","akkad","akra",
+  "alada","alala","aldol","alkool","allo","allod","alloo","allwork","alod","alow",
+  "arad","arado","arak","ararao","arawa","arawak","aroar","arolla","arow",
+  "arrowwood","awald","awol","awork","dada","dado","dalar","dalk","dard","dardaol",
+  "daroo","darr","dawk","doddard","dola","doorward","dora","dorad","dorado",
+  "drad","drawk","drawrod","kaka","kakar","kakkak","kala","kalo","kalwar",
+  "karaka","karl","karo","karoo","karroo","karwar","kawaka","kawakawa","koda",
+  "kodak","kokako","kokra","kolkka","kooka","koorka","kora","koroa","korwa",
+  "kraal","kral","lall","lalo","lawk","loka","lokao","lola","lollard","lora",
+  "loral","lowa","oadal","oakwood","odal","olla","oolak","orad","orra","raad",
+  "rada","roak","roka","roral","waar","waka","walla","wallawalla","wallwork",
+  "wardword","wark","warl","warlow","warrok","warwork","wawa","wawl","wloka",
+  "woad","woak","woald","woodlark","woodwall","woodward","woolwa","woolward",
+  "worldward","worral","wraw","wrawl","agao","agio","agitato","agnation",
+  "agnition","agoing","agon","agonia","ainoi","aion","aition","aizoon","anatto",
+  "angiotonin","ango","annatto","anno","annona","annot","annotto","anoa","anoia",
+  "anonang","anotia","anotta","anotto","antigonon","antinion","antiozonant",
+  "anton","antonia","antonina","antoniniani","antonio","aonian","atonia","azon",
+  "azotin","azotizing","gangion","ganoin","ganton","gaon","gazon","gazoz","gogga",
+  "goggan","gogo","gona","gonagia","gonangia","gonging","gonia","gonion",
+  "gonionia","goog","goto","gozzan","iago","inanition","ingannation","ingoing",
+  "ingoting","inigo","inion","initio","inition","ioni","ionian","iotization",
+  "iotizing","itonia","naio","nanigo","nanization","naoi","naoto","natation",
+  "nato","ngaio","niggot","ninon","niog","niota","nito","niton","nogai","nogg",
+  "nogging","noint","nona","nong","nonion","nonionizing","nonnant","nonnat",
+  "nontan","nontannin","nontanning","nooning","nota","notan","notitia","notition",
+  "nozi","ogganition","oint","onan","onza","oogonia","oogoninia","oont","oooo",
+  "oozoa","otiant","ototoi","otto","ozan","ozonation","ozonization","ozonizing",
+  "taino","tano","tanoa","tanoan","tanto","taotai","tatoo","tiao","tignon",
+  "tigon","togo","togt","toit","toiting","toitoi","tonant","tonation","toona",
+  "toozoo","toto","totting","zanonia","zantiot","zingano","zion","zogan","zogo",
+  "zona","zonation","zonta","zontian","zoon","zoona","zoozoo","antagonization",
+  "tino","tionontati","titano","toag","toat","toatoa","togata","tonga","tongan",
+  "tonn","tonna","tonto","acinuni","acquaintant","actu","acuan","ainu","anaqua",
+  "anicut","annicut","annuitant","antiaquatic","antiqua","antu","aquatinta",
+  "aquitanian","ataunt","atua","auantic","auca","aucan","aucanian","autunian",
+  "cacatua","canaut","cantut","cantuta","canun","cauqui","cicuta","citua","cuca",
+  "cuit","cuna","cunan","cunit","cunni","cunt","cutin","incut","innuit","inunct",
+  "natu","naunt","naut","nautic","nautica","nintu","ninut","niuan","nucin","nunc",
+  "nunni","nutant","quai","quan","quanti","quantic","quat","quata","quia",
+  "quiaquia","quica","quiina","quin","quina","quinaquina","quinia","quinic",
+  "quinicin","quinin","quinina","quininic","quinnat","quinquina","quinta",
+  "quintan","quintant","quintic","quintin","quinua","quitu","tainui","taqua",
+  "tatu","taun","tautit","ticuna","ticunan","tuan","tuant","tucana","tucuna",
+  "tucutucu","tunca","tunica","tunican","tunicata","tunicin","tunna","tunnit",
+  "tunu","tutania","tutin","tututni","uinta","unacquaint","unacquit","unact",
+  "unactinic","unai","unattaint","unau","unca","unci","uncia","uncinata",
+  "uncinct","uncini","unct","uniat","uninn","uniquantic","unquit","unta",
+  "untaint","untaut","untin","untinct","utai","ccitt","ceint","ceinte","centi",
+  "ceti","cetic","cetin","cevine","cinct","citee","citizenize","cive","civie",
+  "civite","cize","ctenii","ecize","enceint","enceinte","enciente","envine",
+  "evectic","evincive","ictic","ieee","incitive","incivic","inez","init",
+  "initive","inne","innet","intentive","intice","intinct","intine","invect",
+  "invein","invenient","invenit","invict","invictive","invt","itcze","iten",
+  "ivin","nein","neti","nettie","nevi","nieve","ninevite","nitent","nivenite",
+  "teenie","teniente","tentie","tice","tictic","tien","tievine","tinc","tineine",
+  "tinne","tinnen","tinnet","tinni","tinnient","tintie","tinzenite","tite","titi",
+  "titien","tittie","veneti","venetic","venice","venie","venin","venine","venite",
+  "ventin","vetivene","vicine","vince","vincent","vinci","vinet","vinic","vint",
+  "zein","zetetic","zincenite","zincic","zincite","zincize","zitzit","zizit",
+  "zizz","ablow","abow","abwab","alew","alowe","awee","aweel","balawa","ballow",
+  "balow","bawbee","bawble","beelbow","bepaw","bewall","beweep","blaw","blowball",
+  "bowable","bowe","bowla","bowle","lelwel","llew","lowable","lowbell","lowe",
+  "lowell","lwop","palew","pawaw","peeweep","pelew","plew","waapa","wabble",
+  "wabe","wallaba","wapp","wappo","weeble","weel","weepable","weewaw","weewee",
+  "weewow","wooable","wollop")     
 
 word_list <- word_list %>% filter(!word %in% nonwords)
 ```
 
-```{r letters}
-center_letter <- "f"
-circle_letters <- c("m",
-                    "u",
+```{r letters, include=FALSE}
+center_letter <- "w"
+circle_letters <- c("e",
+                    "o",
+                    "b",
                     "a",
-                    "r",
-                    "l",
-                    "o")
+                    "p",
+                    "l")
 all_letters <- c(center_letter, circle_letters)
 ```
 
-```{r solve}
+The center letter is **`r center_letter`** and the other letters are **`r circle_letters`**.
+
+```{r solve, include=FALSE}
 solving <- word_list %>%
   #filter to words with center letter
   filter(str_detect(word, center_letter) == TRUE) %>% 
@@ -61,13 +228,8 @@ solving <- solving %>%
 
 answers <- solving %>%
   #keep words that only use the puzzle's letters
-  filter(matches == length) %>% 
-  arrange(desc(length))
+  filter(matches == length)
 
-answers$word
-```
-
-```{r pangrams}
 pangrams <- answers %>%
   filter(length >= 7) %>% 
   #check the puzzle's letters against the word's letters
@@ -76,10 +238,16 @@ pangrams <- answers %>%
  #count number of matching letters
   mutate(p_matches = map(pangram, sum)) %>% 
   unnest(p_matches)
+```
 
+
+There are `r length(answers$word)` answers to this puzzle.
+
+```{r answers, echo=FALSE}
 pangrams %>%
   #keep words that only use the puzzle's letters
-  filter(p_matches == 7) %>% 
-  arrange(desc(length)) %>% 
+  filter(p_matches == 7) %>%
   pull(word)
+
+answers$word
 ```
