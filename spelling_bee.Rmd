@@ -194,19 +194,31 @@ nonwords <- c("fluoroformol", "fluoroform", "floramour", "floramor", "formular",
   "bowable","bowe","bowla","bowle","lelwel","llew","lowable","lowbell","lowe",
   "lowell","lwop","palew","pawaw","peeweep","pelew","plew","waapa","wabble",
   "wabe","wallaba","wapp","wappo","weeble","weel","weepable","weewaw","weewee",
-  "weewow","wooable","wollop")     
+  "weewow","wooable","wollop","acad","acadia","acardia","acardiac","acarid",
+  "acarida","accidia","acct","acidific","acratia","acridic","acridid","acrita",
+  "acta","actiad","adcraft","adriatic","arcadic","arctia","arctiid","arricciati",
+  "artcraft","artic","atactic","ataractic","attacca","cadi","cafard","caff",
+  "caffa","caid","caird","caitif","caitiff","caract","cardia","cardiarctia",
+  "cardita","carditic","carid","carida","carrat","cataria","catti","ccid","cicad",
+  "cicadid","cidarid","crit","dacitic","darac","darci","dardic","daric","diacid",
+  "diacidic","diact","diadic","dict","dictic","didric","dirca","facia","faciata",
+  "facit","faradaic","faradic","fatidic","fica","fict","fidac","fracid","fract",
+  "fricti","iatric","idaic","idic","iridic","iritic","itatartaric","radiac",
+  "tacca","taccada","tariric","tartaric","tataric","ticca","tictac","trac",
+  "triac","triacid","triact","triadic","triarctic","triatic","trica","tricar",
+  "tricia","trictrac","tritactic")     
 
 word_list <- word_list %>% filter(!word %in% nonwords)
 ```
 
 ```{r letters, include=FALSE}
-center_letter <- "w"
-circle_letters <- c("e",
-                    "o",
-                    "b",
+center_letter <- "c"
+circle_letters <- c("r",
+                    "i",
+                    "d",
                     "a",
-                    "p",
-                    "l")
+                    "f",
+                    "t")
 all_letters <- c(center_letter, circle_letters)
 ```
 
